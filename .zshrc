@@ -307,11 +307,6 @@ dev() {
   fi
 }
 
-# Smart ls - shows more info when useful
-ls() {
-  command ls -h --color=auto "$@"
-}
-
 
 # --------------------------------------------------------------------
 # Utility Functions - System
