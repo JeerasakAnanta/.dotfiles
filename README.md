@@ -7,6 +7,23 @@ My dotfiles is  backup
 - feh
 - polybar
 
+## Justfile Commands
+This project includes a `justfile` for common tasks. Install [just](https://github.com/casey/just) first.
+
+### Config Sync
+- `just sync-bashrc` - sync .bashrc to home directory
+- `just sync-tmux` - sync tmux.conf to home directory
+- `just sync-configs` - sync both .bashrc and tmux.conf
+
+### Dotfiles Management
+- `just update-dotfiles` - commit all dotfiles changes
+- `just push-dotfiles` - push to remote
+- `just pull-dotfiles` - pull latest changes
+- `just install-dotfiles` - symlink dotfiles to home
+
+### Other Utilities
+Run `just --list` to see all available recipes.
+
 ## add ppa  i3-wm on ubuntu 21.04 
 ```
   sudo add-apt-repository ppa:regolith-linux/release
