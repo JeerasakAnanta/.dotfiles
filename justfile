@@ -44,6 +44,22 @@ default:
     ln -sfv ~/.dotfiles/.zshrc ~/.zshrc
     echo "✅ Dotfiles installed"
 
+# Sync .bashrc to home directory
+@sync-bashrc:
+    echo "📄 Syncing .bashrc..."
+    cp -v ~/.dotfiles/.bashrc ~/.bashrc
+    echo "✅ .bashrc synced"
+
+# Sync tmux.conf to home directory
+@sync-tmux:
+    echo "📄 Syncing tmux.conf..."
+    cp -v ~/.dotfiles/tmux.conf ~/.tmux.conf
+    echo "✅ tmux.conf synced"
+
+# Sync .bashrc and tmux.conf
+@sync-configs: sync-bashrc sync-tmux
+    echo "✅ All configs synced"
+
 # ============================================================
 # DEVELOPMENT WORKFLOWS
 # ============================================================
