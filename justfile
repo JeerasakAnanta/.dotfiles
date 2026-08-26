@@ -104,8 +104,8 @@ default:
 # Keep only the N newest snapshots (default 10)
 @prune-snapshots keep="10":
     #!/bin/zsh
-    ls -t ~/backups/snapshot-*.tar.gz 2>/dev/null | tail -n +$((${1} + 1)) | xargs -r rm -v
-    echo "✅ Kept ${1} newest snapshots"
+    ls -t ~/backups/snapshot-*.tar.gz 2>/dev/null | tail -n +$((${{keep}} + 1)) | xargs -r rm -v
+    echo "✅ Kept {{keep}} newest snapshots"
 
 # ============================================================
 # DEVELOPMENT WORKFLOWS
