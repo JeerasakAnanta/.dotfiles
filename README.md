@@ -74,3 +74,4 @@ https://github.com/EliverLara/terminator-themes
 ```
 sudo apt install xcwd
 ```
+
