@@ -1,4 +1,5 @@
 lua <<EOF
+local ok, _ = pcall(function()
 require'nvim-treesitter.configs'.setup {
   highlight = {
     enable = true,
@@ -13,9 +14,12 @@ require'nvim-treesitter.configs'.setup {
     additional_vim_regex_highlighting = false,
   },
 }
+end)
+if not ok then vim.notify("treesitter setup skipped", vim.log.levels.WARN) end
 EOF
 
 lua <<EOF
+local ok, _ = pcall(function()
 require'nvim-treesitter.configs'.setup {
   incremental_selection = {
     enable = true,
@@ -27,5 +31,7 @@ require'nvim-treesitter.configs'.setup {
     },
   },
 }
+end)
+if not ok then vim.notify("treesitter setup skipped", vim.log.levels.WARN) end
 EOF
 
