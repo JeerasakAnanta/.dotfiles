@@ -61,6 +61,53 @@ default:
     echo "✅ All configs synced"
 
 # ============================================================
+# BACKUP & SYNC
+# ============================================================
+
+# Sync all important configs into ~/.dotfiles and push to GitHub
+@backup:
+    #!/bin/zsh
+    set -e
+    echo "📦 Backup configs -> ~/.dotfiles ..."
+    [[ -d ~/.config/nvim && ! -L ~/.config/nvim ]] && rsync -a --delete ~/.config/nvim/ ~/.dotfiles/.config/nvim-minimal/
+    cp -fv ~/.zshrc ~/.dotfiles/.zshrc 2>/dev/null || true
+    cp -fv ~/.tmux.conf ~/.dotfiles/.tmux.conf 2>/dev/null || true
+    cd ~/.dotfiles
+    if ! git diff --quiet || [[ -n "$(git ls-files --others --exclude-standard)" ]]; then
+        git add -A
+        git commit -m "backup: sync configs $(date +%Y-%m-%d_%H:%M)"
+        git push origin main
+        echo "✅ Backup pushed"
+    else
+        echo "✅ Nothing new to backup"
+    fi
+
+# Restore configs from ~/.dotfiles back to home
+@restore:
+    #!/bin/zsh
+    echo "♻️  Restoring configs from ~/.dotfiles ..."
+    ln -sfnv ~/.dotfiles/.zshrc ~/.zshrc
+    mkdir -pv ~/.config/nvim-minimal && rsync -a --delete ~/.dotfiles/.config/nvim-minimal/ ~/.config/nvim-minimal/
+    echo "✅ Restore complete"
+
+# Create full compressed tarball of key dirs in ~/backups
+@snapshot dir="":
+    #!/bin/zsh
+    out="${1:-$HOME/backups/snapshot-$(date +%Y%m%d-%H%M%S).tar.gz}"
+    mkdir -pv "$out:h"
+    tar czf "$out" \
+      --exclude='.cache' --exclude='node_modules' --exclude='.local/share/nvim/lazy' \
+      .config .dotfiles .ssh .zshrc 2>/dev/null
+    ls -lh "$out"
+    echo "✅ Snapshot saved: $out"
+
+# Keep only the N newest snapshots (default 10)
+@prune-snapshots keep="10":
+    #!/bin/zsh
+    ls -t ~/backups/snapshot-*.tar.gz 2>/dev/null | tail -n +$((${1} + 1)) | xargs -r rm -v
+    echo "✅ Kept ${1} newest snapshots"
+
+# ============================================================
 # DEVELOPMENT WORKFLOWS
 # ============================================================
 

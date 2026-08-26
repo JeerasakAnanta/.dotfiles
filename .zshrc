@@ -1,25 +1,20 @@
-# ======== ZSH Configuration ======= 
-# editor: jeerasak 
+# ======== ZSH Configuration (Optimized for Productivity) =======
+# editor: jeerasak
 # ==================================
 
-# --------------------------------------------------------------------
-# Powerlevel10k Instant Prompt (Should stay at top)
-# --------------------------------------------------------------------
+# ============================================================
+# 1. INIT - Powerlevel10k Instant Prompt
+# ============================================================
+typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-
-# --------------------------------------------------------------------
-# Oh-My-Zsh
-# --------------------------------------------------------------------
+# ============================================================
+# 2. OH-MY-ZSH SETUP
+# ============================================================
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME="powerlevel10k/powerlevel10k"
-
-
-# --------------------------------------------------------------------
-# Plugins (optimized - fast load)
-# --------------------------------------------------------------------
 plugins=(
   git
   z
@@ -28,126 +23,62 @@ plugins=(
   docker
   docker-compose
 )
-
 source $ZSH/oh-my-zsh.sh
 
-
-# --------------------------------------------------------------------
-# Path
-# --------------------------------------------------------------------
+# ============================================================
+# 3. PATH CONFIGURATION
+# ============================================================
 export PATH="$PATH:/opt/nvim-linux-x86_64/bin"
+export PATH="/home/game/.local/bin:$PATH"
+export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+export EDITOR="nvim"
+export VISUAL="nvim"
 
-
-# --------------------------------------------------------------------
-# Aliases - System & Navigation
-# --------------------------------------------------------------------
-alias zshconfig="nano ~/.zshrc"
-alias ohmyzsh="nano ~/.oh-my-zsh"
+# ============================================================
+# 4. ALIASES - SYSTEM & NAVIGATION (PRODUCTIVITY)
+# ============================================================
+# Config
+alias zshconfig="nvim ~/.zshrc"
+alias zshreload="exec zsh"
 alias update="sudo apt update && sudo apt full-upgrade -y"
-alias startunnel="cloudflared tunnel --config /home/game/.cloudflared/config.yml run api-homelab"
 
-# Navigation
+# Navigation - Fast movement
 alias ..="cd .."
 alias ...="cd ../.."
 alias ....="cd ../../.."
 alias ~="cd ~"
-alias cd..="cd .."
-alias lsa="ls -lah"
-alias la="ls -lA"
-alias ll="ls -lh"
+alias back="cd -"
+alias home="cd ~"
 
-# Quick navigation
-alias proj="cd ~/projects"
-alias dotfiles="cd ~/.dotfiles"
-alias config="cd ~/.config"
+# Listing - Enhanced with exa/bat if available
+if command -v exa &> /dev/null; then
+  alias ls="exa --group-directories-first"
+  alias la="exa -lah --group-directories-first"
+  alias ll="exa -lh --group-directories-first"
+  alias lsd="exa -lh --sort=size --reverse --group-directories-first"
+else
+  alias la="ls -lah"
+  alias ll="ls -lh"
+fi
 
-# File operations
+# File operations with safety
 alias mkdir="mkdir -pv"
 alias cp="cp -iv"
 alias mv="mv -iv"
 alias rm="rm -iv"
 alias mkfile="touch"
 
-# Network
+# Network & System
 alias ping="ping -c 5"
 alias ips="hostname -I"
 alias ports="netstat -tulpn"
-
-# Disk usage
-alias du="du -h"
-alias df="df -h"
-alias ducks="du -sh * | sort -rh"
-
-# Process management
-alias pgrep="pgrep -l"
-alias psa="ps aux"
-
-# --------------------------------------------------------------------
-# Aliases - Development & Git
-# --------------------------------------------------------------------
-# Git shortcuts
-alias g="git"
-alias ga="git add"
-alias gaa="git add ."
-alias gst="git status"
-alias gc="git commit -m"
-alias gca="git commit -am"
-alias gp="git push"
-alias gpl="git pull"
-alias gb="git branch"
-alias gco="git checkout"
-alias gcb="git checkout -b"
-alias glog="git log --oneline -n 20"
-alias glogp="git log --oneline --graph --all"
-alias gd="git diff"
-alias gdw="git diff --word-diff"
-alias gr="git reset"
-alias grh="git reset --hard"
-alias grm="git rm"
-alias gm="git merge"
-alias gf="git fetch"
-alias gaa="git add --all"
-
-# Node/NPM
-alias ni="npm install"
-alias nis="npm install --save"
-alias nid="npm install --save-dev"
-alias nun="npm uninstall"
-alias nir="npm install && npm run"
-alias nr="npm run"
-alias nrd="npm run dev"
-alias nrb="npm run build"
-alias nrs="npm run start"
-alias nrt="npm run test"
-alias nrl="npm run lint"
-
-# Docker
-alias d="docker"
-alias dc="docker compose"
-alias dcup="docker compose up -d"
-alias dcdown="docker compose down"
-alias dcrm="docker compose rm -f"
-alias dclogs="docker compose logs -f"
-alias dps="docker ps"
-alias dpsa="docker ps -a"
-alias drm="docker rm"
-alias drmi="docker rmi"
-
-# Python
-alias py="python3"
-alias pip="pip3"
-alias pir="pip install -r requirements.txt"
-alias venv="python3 -m venv venv && source venv/bin/activate"
-
-# Editors
-alias vi="nvim"
-alias vim="nvim"
-alias nano="nano -c"
+alias diskuse="du -sh * | sort -rh"
+alias memuse="free -h"
+alias cpuinfo="lscpu | head -20"
 
 # Quick commands
 alias c="clear"
 alias h="history"
-alias reload="exec zsh"
 alias serve="python3 -m http.server 8000"
 alias servepy="python3 -m http.server"
 
@@ -156,39 +87,104 @@ alias grep="grep --color=auto"
 alias egrep="egrep --color=auto"
 alias fgrep="fgrep --color=auto"
 
+# ============================================================
+# 5. ALIASES - DEVELOPMENT & GIT
+# ============================================================
+# Git shortcuts - Pro level
+alias g="git"
+alias ga="git add"
+alias gaa="git add -A"
+alias gs="git status"
+alias gc="git commit -m"
+alias gca="git commit -am"
+alias gp="git push"
+alias gpl="git pull"
+alias gb="git branch"
+alias gba="git branch -a"
+alias gco="git checkout"
+alias gcb="git checkout -b"
+alias gd="git diff"
+alias gdw="git diff --word-diff"
+alias glog="git log --oneline -n 20"
+alias gloga="git log --oneline --graph --all"
+alias gr="git reset"
+alias grh="git reset --hard"
+alias gm="git merge"
+alias gf="git fetch"
+alias gt="git tag"
+alias gst="git stash"
+alias gstp="git stash pop"
 
-# --------------------------------------------------------------------
-# Powerlevel10k Config
-# --------------------------------------------------------------------
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+# Git functions
+gclone() { git clone "$1" && cd "$(basename "$1" .git)"; }
+glast() { git log -1 --stat; }
+gblast() { git branch -v | head -5; }
 
+# Node/NPM/PNPM
+alias ni="npm install"
+alias nis="npm install --save"
+alias nid="npm install --save-dev"
+alias nun="npm uninstall"
+alias nr="npm run"
+alias nrd="npm run dev"
+alias nrb="npm run build"
+alias nrs="npm run start"
+alias nrt="npm run test"
+alias nrl="npm run lint"
+alias pr="pnpm run"
+alias prd="pnpm run dev"
+alias prb="pnpm run build"
 
-# --------------------------------------------------------------------
-# Utility Functions - Navigation & Files
-# --------------------------------------------------------------------
-# Create directory and enter it
-mkcd() {
-  mkdir -pv "$1" && cd "$1"
+# Docker
+alias d="docker"
+alias dc="docker compose"
+alias dcup="docker compose up -d"
+alias dcdown="docker compose down"
+alias dclogs="docker compose logs -f"
+alias dps="docker ps"
+alias dpsa="docker ps -a"
+alias drm="docker rm"
+alias drmi="docker rmi"
+alias dprune="docker system prune -f"
+
+# Python
+alias py="python3"
+alias pip="pip3"
+alias pir="pip install -r requirements.txt"
+alias venv="python3 -m venv venv && source venv/bin/activate"
+alias venvdeactivate="deactivate"
+
+# Editors
+alias vi="nvim"
+alias vim="nvim"
+alias nano="nano -c"
+
+# ============================================================
+# 6. FUNCTIONS - NAVIGATION & FILES
+# ============================================================
+# Create and enter directory
+mkcd() { mkdir -pv "$1" && cd "$1"; }
+
+# Fast directory search and jump
+cdl() {
+  local dir=$(find ~ -type d -name "$1" 2>/dev/null | head -1)
+  if [ -n "$dir" ]; then
+    cd "$dir"
+  else
+    echo "Directory '$1' not found"
+  fi
 }
 
 # Find file/folder by name
-ff() {
-  find . -type f -name "*$1*" 2>/dev/null
-}
+ff() { find . -type f -name "*$1*" 2>/dev/null; }
+fd() { find . -type d -name "*$1*" 2>/dev/null; }
 
-fd() {
-  find . -type d -name "*$1*" 2>/dev/null
-}
-
-# Search in files (like grep but easier)
-search() {
-  grep -r "$1" . --color=auto 2>/dev/null
-}
-
-# Quick bookmark - jump to last directory
-bd() {
-  cd - > /dev/null
-}
+# Search in files (ripgrep if available)
+if command -v rg &> /dev/null; then
+  search() { rg --color=auto "$1" . 2>/dev/null; }
+else
+  search() { grep -r "$1" . --color=auto 2>/dev/null; }
+fi
 
 # Extract archives
 extract() {
@@ -205,7 +201,7 @@ extract() {
       *.zip)       unzip "$1"     ;;
       *.Z)         uncompress "$1";;
       *.7z)        7z x "$1"      ;;
-      *)           echo "'$1' cannot be extracted via extract()" ;;
+      *)           echo "'$1' cannot be extracted" ;;
     esac
   else
     echo "'$1' is not a valid file"
@@ -213,19 +209,19 @@ extract() {
 }
 
 # Quick backup
-backup() {
-  cp -r "$1" "${1}.backup.$(date +%s)"
+backup() { cp -r "$1" "${1}.backup.$(date +%s)" && echo "Backed up: ${1}.backup.$(date +%s)"; }
+
+# Directory stats
+lstats() {
+  echo "📁 Files: $(find . -type f | wc -l) | 📂 Dirs: $(find . -type d | wc -l) | 📦 Size: $(du -sh . | cut -f1)"
 }
 
-# Count files in directory
-countfiles() {
-  find "${1:-.}" -type f | wc -l
-}
+# File counter
+countfiles() { find "${1:-.}" -type f | wc -l; }
 
-
-# --------------------------------------------------------------------
-# Utility Functions - Development
-# --------------------------------------------------------------------
+# ============================================================
+# 7. FUNCTIONS - DEVELOPMENT & BUILD
+# ============================================================
 # Initialize new project
 init_project() {
   local name="${1:-.}"
@@ -235,43 +231,23 @@ init_project() {
   echo "# $name" > README.md
   git add README.md
   git commit -m "initial commit"
+  echo "✅ Project initialized: $name"
 }
 
 # Git utilities
-git_branches_sorted() {
-  git for-each-ref --sort=-committerdate refs/heads/ --format='%(refname:short)'
-}
+git_branches_sorted() { git for-each-ref --sort=-committerdate refs/heads/ --format='%(refname:short)'; }
+git_commits_today() { git log --since="00:00" --until="23:59" --oneline; }
+git_stash_show() { git stash show -p $(git stash list | head -1 | cut -d: -f1); }
 
-git_latest() {
-  git log -1 --oneline
-}
-
-# NPM/Node utilities
-nv() {
-  node --version
-  npm --version
-}
-
-# Check if port is in use
-port_check() {
-  lsof -i :"$1" 2>/dev/null || echo "Port $1 is free"
-}
-
-# Kill process by port
-kill_port() {
-  lsof -ti:"$1" | xargs kill -9 2>/dev/null && echo "Killed process on port $1" || echo "No process on port $1"
-}
+# Port utilities
+port_check() { lsof -i :"$1" 2>/dev/null || echo "✅ Port $1 is free"; }
+kill_port() { lsof -ti:"$1" | xargs kill -9 2>/dev/null && echo "✅ Killed process on port $1" || echo "No process on port $1"; }
 
 # Docker utilities
-docker_cleanup() {
-  docker system prune -f && echo "Docker cleanup done"
-}
+docker_cleanup() { docker system prune -f && echo "✅ Docker cleanup done"; }
+docker_logs_tail() { docker logs -f --tail=50 "$1"; }
 
-docker_logs_tail() {
-  docker logs -f --tail=50 "$1"
-}
-
-# Build and test
+# Build/Test/Dev commands
 build() {
   if [ -f "Makefile" ]; then
     make
@@ -280,7 +256,7 @@ build() {
   elif [ -f "setup.py" ]; then
     python3 setup.py build
   else
-    echo "No build system detected"
+    echo "❌ No build system detected"
   fi
 }
 
@@ -292,39 +268,41 @@ test() {
   elif [ -f "go.mod" ]; then
     go test ./...
   else
-    echo "No test runner detected"
+    echo "❌ No test runner detected"
   fi
 }
 
-# Development server
 dev() {
   if [ -f "package.json" ]; then
     npm run dev
   elif [ -f "docker-compose.yml" ]; then
     docker compose up -d
   else
-    echo "No dev environment detected"
+    echo "❌ No dev environment detected"
   fi
 }
 
-
-# --------------------------------------------------------------------
-# Utility Functions - System
-# --------------------------------------------------------------------
-# Directory size summary
-size() {
-  du -sh "${1:-.}" | sort -hr
+# Environment checker
+envcheck() {
+  echo "🔍 Environment Check:"
+  echo "  Node:   $(node -v 2>/dev/null || echo '❌')"
+  echo "  NPM:    $(npm -v 2>/dev/null || echo '❌')"
+  echo "  Python: $(python3 -v 2>&1 | head -1 || echo '❌')"
+  echo "  Git:    $(git -v 2>/dev/null || echo '❌')"
+  echo "  Docker: $(docker -v 2>/dev/null || echo '❌')"
 }
 
-# RAM usage
-mem() {
-  free -h
-}
+# ============================================================
+# 8. FUNCTIONS - SYSTEM & MONITORING
+# ============================================================
+# Directory size
+size() { du -sh "${1:-.}" 2>/dev/null | sort -hr; }
+
+# Memory usage
+mem() { free -h; }
 
 # CPU info
-cpu() {
-  lscpu | grep -E "Architecture|CPU op-mode|Byte Order|CPU\(s\)|On-line"
-}
+cpu() { lscpu | grep -E "Architecture|CPU op-mode|Byte Order|CPU\(s\)|On-line"; }
 
 # System info
 sysinfo() {
@@ -341,63 +319,151 @@ sysinfo() {
   df -h | grep -v "tmpfs"
 }
 
-# Update dotfiles
-dotfiles_update() {
-  cd ~/.dotfiles
-  git add -A
-  git commit -m "update: dotfiles $(date +%Y-%m-%d)" || echo "Nothing to commit"
-  cd -
-}
-
 # Monitor system
-watch_system() {
-  watch -n 1 'clear; echo "=== CPU ==="; top -bn1 | head -5; echo "=== Memory ==="; free -h'
+watch_system() { watch -n 1 'clear; echo "=== CPU ==="; top -bn1 | head -5; echo "=== Memory ==="; free -h'; }
+
+# ============================================================
+# 9. FUNCTIONS - TODO & NOTES
+# ============================================================
+# Quick todo
+todo() { echo "$(date '+%Y-%m-%d %H:%M') - $*" >> ~/.todo.txt && echo "✅ Added: $*"; }
+showtodo() { cat ~/.todo.txt 2>/dev/null || echo "📝 No todos yet"; }
+cleartodo() { rm ~/.todo.txt && echo "✅ Todos cleared"; }
+
+# Quick notes
+note() { echo "$(date '+%Y-%m-%d %H:%M') - $*" >> ~/.notes.txt && echo "✅ Note saved"; }
+shownotes() { cat ~/.notes.txt 2>/dev/null || echo "📝 No notes yet"; }
+
+# ============================================================
+# 10. FUNCTIONS - BULK OPERATIONS
+# ============================================================
+# Bulk rename
+bulk_rename() {
+  if [ $# -lt 2 ]; then
+    echo "Usage: bulk_rename <pattern> <replacement>"
+    return 1
+  fi
+  for f in *"$1"*; do
+    [ -e "$f" ] && mv "$f" "${f//$1/$2}"
+  done
+  echo "✅ Renamed files: $1 → $2"
 }
 
-
-# --------------------------------------------------------------------
-# NVM Lazy Load (Fast | No Errors | Safe)
-# --------------------------------------------------------------------
-export NVM_DIR="$HOME/.nvm"
-
-load_nvm() {
-  unset -f node npm npx nvm
-  [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+# Bulk change extension
+change_ext() {
+  if [ $# -lt 2 ]; then
+    echo "Usage: change_ext <old_ext> <new_ext>"
+    return 1
+  fi
+  for f in *."$1"; do
+    [ -e "$f" ] && mv "$f" "${f%."$1"}.$2"
+  done
+  echo "✅ Changed extension: .$1 → .$2"
 }
 
-nvm()  { load_nvm; nvm "$@"; }
-node() { load_nvm; node "$@"; }
-npm()  { load_nvm; npm "$@"; }
-npx()  { load_nvm; npx "$@"; }
+# ============================================================
+# 11. FUNCTIONS - QUICK SEARCH & JUMP
+# ============================================================
+# Jump to recent git repo
+jgit() {
+  local dir=$(find ~ -name ".git" -type d 2>/dev/null | sed 's/.git$//' | sort -r | head -1)
+  [ -n "$dir" ] && cd "$dir" && git status
+}
 
+# All repos status
+allstatus() {
+  find ~ -maxdepth 3 -name ".git" -type d 2>/dev/null | xargs -I {} sh -c 'echo "=== {} ===" && git -C {} status -s'
+}
 
-# --------------------------------------------------------------------
-# Pyenv (clean version, no duplicates)
-# --------------------------------------------------------------------
-export PYENV_ROOT="$HOME/.pyenv"
-export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init - zsh)"
+# ============================================================
+# 12. POWERLEVEL10K CONFIG
+# ============================================================
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
+# ============================================================
+# 13. FZF INTEGRATION (FUZZY FINDER)
+# ============================================================
+if [ -f "$HOME/.fzf.zsh" ]; then
+  source "$HOME/.fzf.zsh"
+  export FZF_DEFAULT_OPTS="--height 40% --reverse --border"
+  export FZF_DEFAULT_COMMAND="fd --type f --hidden --follow --exclude .git"
 
-# --------------------------------------------------------------------
-# Custom ENV Loader
-# --------------------------------------------------------------------
+  # Ctrl+R - History search
+  # Ctrl+T - File search
+  # Alt+C - Directory search
+fi
+
+# ============================================================
+# 14. CUSTOM ENV LOADER
+# ============================================================
 [ -f "$HOME/.local/bin/env" ] && . "$HOME/.local/bin/env"
 
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-
-# opencode
+# ============================================================
+# 15. THIRD-PARTY INTEGRATIONS
+# ============================================================
+# OpenCode
 export PATH=/home/game/.opencode/bin:$PATH
 
-# Linuxbrew (lazy load for speed)
+# Linuxbrew (lazy load)
 if [ -d "/home/linuxbrew/.linuxbrew" ]; then
   eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv zsh)"
 fi
 
-# --------------------------------------------------------------------
-# Performance Optimizations & Settings
-# --------------------------------------------------------------------
-# History settings for better recall
+# Google Cloud SDK
+if [ -f '/home/game/google-cloud-sdk/path.zsh.inc' ]; then
+  . '/home/game/google-cloud-sdk/path.zsh.inc'
+fi
+if [ -f '/home/game/google-cloud-sdk/completion.zsh.inc' ]; then
+  . '/home/game/google-cloud-sdk/completion.zsh.inc'
+fi
+
+# PNPM
+export PNPM_HOME="/home/game/.local/share/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME:"*) ;;
+  *) export PATH="$PNPM_HOME:$PATH" ;;
+esac
+
+# PM2 Completion
+###-begin-pm2-completion-###
+COMP_WORDBREAKS=${COMP_WORDBREAKS/=/}
+COMP_WORDBREAKS=${COMP_WORDBREAKS/@/}
+export COMP_WORDBREAKS
+
+if type complete &>/dev/null; then
+  _pm2_completion () {
+    local si="$IFS"
+    IFS=$'\n' COMPREPLY=($(COMP_CWORD="$COMP_CWORD" \
+                           COMP_LINE="$COMP_LINE" \
+                           COMP_POINT="$COMP_POINT" \
+                           pm2 completion -- "${COMP_WORDS[@]}" \
+                           2>/dev/null)) || return $?
+    IFS="$si"
+  }
+  complete -o default -F _pm2_completion pm2
+elif type compctl &>/dev/null; then
+  _pm2_completion () {
+    local cword line point words si
+    read -Ac words
+    read -cn cword
+    let cword-=1
+    read -l line
+    read -ln point
+    si="$IFS"
+    IFS=$'\n' reply=($(COMP_CWORD="$cword" \
+                       COMP_LINE="$line" \
+                       COMP_POINT="$point" \
+                       pm2 completion -- "${words[@]}" \
+                       2>/dev/null)) || return $?
+    IFS="$si"
+  }
+  compctl -K _pm2_completion + -f + pm2
+fi
+###-end-pm2-completion-###
+
+# ============================================================
+# 16. ZSHELL HISTORY SETTINGS
+# ============================================================
 export HISTFILE=~/.zsh_history
 export HISTSIZE=100000
 export SAVEHIST=100000
@@ -406,22 +472,64 @@ setopt HIST_IGNORE_DUPS
 setopt HIST_FIND_NO_DUPS
 setopt HIST_REDUCE_BLANKS
 setopt INC_APPEND_HISTORY
+setopt HIST_IGNORE_SPACE
 
-# Completion settings
+# ============================================================
+# 17. COMPLETION SETTINGS
+# ============================================================
 setopt MENU_COMPLETE
 setopt AUTO_MENU
 setopt COMPLETE_IN_WORD
 setopt ALWAYS_TO_END
 
-# Keybindings for better productivity
+# Case-insensitive completion
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
+zstyle ':completion:*' list-colors ''
+zstyle ':completion:*:*:docker:*' option-stacking yes
+
+# ============================================================
+# 18. KEYBINDINGS
+# ============================================================
 bindkey '^[[A' history-search-backward
 bindkey '^[[B' history-search-forward
 bindkey '^[[3~' delete-char
 bindkey '^[^?' backward-delete-word
-
-# Case-insensitive completion
-zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
-
-# Quick directory stack (Alt+Left/Right)
 bindkey '^[[1;3C' forward-word
 bindkey '^[[1;3D' backward-word
+
+# ============================================================
+# 19. MISC SETTINGS & OPTIMIZATIONS
+# ============================================================
+# Disable auto-correct
+unsetopt correct
+unsetopt correct_all
+
+# Enable extended globbing
+setopt extendedglob
+
+# Notify immediately when background jobs change
+setopt NOTIFY
+
+
+# AsyncAPI CLI Autocomplete
+
+ASYNCAPI_AC_ZSH_SETUP_PATH=/home/game/.cache/@asyncapi/cli/autocomplete/zsh_setup; [[ -f $ASYNCAPI_AC_ZSH_SETUP_PATH ]] && source $ASYNCAPI_AC_ZSH_SETUP_PATH # asyncapi autocomplete setup
+
+
+export PATH=$HOME/.local/bin:$PATH
+export PATH="$HOME/.local/bin:$PATH"
+
+# bun completions
+[ -s "/home/game/.bun/_bun" ] && source "/home/game/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+
+# strix
+export PATH=/home/game/.strix/bin:$PATH
+
+. "$HOME/.atuin/bin/env"
+
+eval "$(atuin init zsh)"
+export PATH="$HOME/.local/bin:$PATH"
