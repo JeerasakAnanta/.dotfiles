@@ -154,10 +154,19 @@ alias pir="pip install -r requirements.txt"
 alias venv="python3 -m venv venv && source venv/bin/activate"
 alias venvdeactivate="deactivate"
 
-# Editors
+# Editors (vim = classic vim with ~/.vimrc, nvim = neovim)
+unalias vim vi 2>/dev/null
+alias v="vim"
 alias vi="nvim"
-alias vim="nvim"
 alias nano="nano -c"
+
+# Vim shortcuts
+alias vimrc="vim ~/.vimrc"
+alias nvimrc="nvim ~/.config/nvim/init.lua"
+alias zshrc="nvim ~/.zshrc"
+alias plug-install="vim +PlugInstall +qa"
+alias plug-update="vim +PlugUpdate +qa"
+alias plug-clean="vim +PlugClean +qa"
 
 # ============================================================
 # 6. FUNCTIONS - NAVIGATION & FILES
