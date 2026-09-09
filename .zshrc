@@ -40,7 +40,7 @@ export VISUAL="nvim"
 # Config
 alias zshconfig="nvim ~/.zshrc"
 alias zshreload="exec zsh"
-alias update="sudo apt update && sudo apt full-upgrade -y"
+alias update="sudo apt update && sudo apt full-upgrade -y && sudo apt autoremove -y && sudo apt autoclean"
 
 # Navigation - Fast movement
 alias ..="cd .."
