@@ -542,3 +542,10 @@ export PATH=/home/game/.strix/bin:$PATH
 
 eval "$(atuin init zsh)"
 export PATH="$HOME/.local/bin:$PATH"
+# Only touch the terminal when interactive with a TTY — avoids
+# "stty: 'standard input': Inappropriate ioctl for device" during
+# Powerlevel10k instant prompt / non-interactive init.
+if [[ $- == *i* && -t 0 ]]; then
+  stty -ixon 2>/dev/null || true
+fi
+alias vim="nvim"  # vim opens neovim

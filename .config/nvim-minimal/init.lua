@@ -99,7 +99,7 @@ do
   vim.g.maplocalleader = ' '
 
   -- Set to true if you have a Nerd Font installed and selected in the terminal
-  vim.g.have_nerd_font = false
+  vim.g.have_nerd_font = true
 
   -- [[ Setting options ]]
   --  See `:help vim.o`
@@ -164,6 +164,9 @@ do
   -- Show which line your cursor is on
   vim.o.cursorline = true
 
+  -- Show an 80-column guide line
+  vim.o.colorcolumn = '80'
+
   -- Minimal number of screen lines to keep above and below the cursor.
   vim.o.scrolloff = 10
 
@@ -184,6 +187,22 @@ do
   -- Clear highlights on search when pressing <Esc> in normal mode
   --  See `:help hlsearch`
   vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
+
+  -- Muscle-memory save from any mode (no need to Esc + :w + Enter)
+  vim.keymap.set({ 'n', 'i', 'v' }, '<C-s>', '<cmd>w<CR><Esc>', { desc = 'Save file' })
+
+  -- Save + run current file in a bottom split terminal (filetype-aware)
+  vim.keymap.set('n', '<leader>r', function()
+    vim.cmd.write()
+    local runners = { python = 'python3', lua = 'lua', javascript = 'node', typescript = 'node', sh = 'bash' }
+    local cmd = runners[vim.bo.filetype]
+    if not cmd then
+      vim.notify('No runner for filetype: ' .. vim.bo.filetype, vim.log.levels.WARN)
+      return
+    end
+    vim.cmd('botright 12split | terminal ' .. cmd .. ' ' .. vim.fn.shellescape(vim.fn.expand '%'))
+    vim.cmd.startinsert()
+  end, { desc = '[R]un current file' })
 
   -- Diagnostic Config & Keymaps
   --  See `:help vim.diagnostic.Opts`
@@ -210,6 +229,50 @@ do
   }
 
   vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
+
+  -- Lean lazygit: floating terminal, no plugin. <leader>gg toggles.
+  -- Requires lazygit binary in PATH (you have it: /usr/local/bin/lazygit).
+  local lazygit_buf, lazygit_win = nil, nil
+  local function toggle_lazygit()
+    if lazygit_win and vim.api.nvim_win_is_valid(lazygit_win) then
+      vim.api.nvim_win_hide(lazygit_win)
+      lazygit_win = nil
+      return
+    end
+    local is_new = false
+    if not (lazygit_buf and vim.api.nvim_buf_is_valid(lazygit_buf)) then
+      lazygit_buf = vim.api.nvim_create_buf(false, true)
+      is_new = true
+    end
+    local w, h = math.floor(vim.o.columns * 0.9), math.floor(vim.o.lines * 0.9)
+    lazygit_win = vim.api.nvim_open_win(lazygit_buf, true, {
+      relative = 'editor',
+      width = w,
+      height = h,
+      col = math.floor((vim.o.columns - w) / 2),
+      row = math.floor((vim.o.lines - h) / 2),
+      style = 'minimal',
+      border = 'rounded',
+    })
+    -- Only start the terminal job once per buffer. Re-showing a hidden
+    -- lazygit buffer must NOT call termopen/jobstart again, or you get
+    -- E5108: jobstart(...,{term=true}) requires unmodified buffer.
+    if is_new then
+      vim.fn.jobstart('lazygit', {
+        term = true,
+        on_exit = function()
+          if lazygit_win and vim.api.nvim_win_is_valid(lazygit_win) then
+            vim.api.nvim_win_close(lazygit_win, true)
+          end
+          lazygit_win, lazygit_buf = nil, nil
+        end,
+      })
+    end
+    vim.cmd.startinsert()
+  end
+  _G.Lazygit_toggle = toggle_lazygit
+  vim.keymap.set('n', '<leader>gg', toggle_lazygit, { desc = '[G]it lazy[G]it' })
+  vim.keymap.set('t', '<leader>gg', '<C-\\><C-n><cmd>lua _G.Lazygit_toggle()<CR>', { desc = 'Hide lazygit' })
 
   -- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
   -- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
@@ -411,6 +474,7 @@ do
     -- Document existing key chains
     spec = {
       { '<leader>s', group = '[S]earch', mode = { 'n', 'v' } },
+      { '<leader>g', group = '[G]it' },
       { '<leader>t', group = '[T]oggle' },
       { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } }, -- Enable gitsigns recommended keymaps first
       { 'gr', group = 'LSP Actions', mode = { 'n' } },
@@ -472,6 +536,13 @@ do
   -- - sd'   - [S]urround [D]elete [']quotes
   -- - sr)'  - [S]urround [R]eplace [)] [']
   require('mini.surround').setup()
+
+  -- Auto-close brackets/quotes: type ( and get () with cursor inside.
+  -- <BS> deletes the pair, <CR> between pair expands with indent.
+  require('mini.pairs').setup()
+
+  -- Comment lines: gcc = toggle line, gc = toggle selection (e.g. gc2j, v+gc)
+  require('mini.comment').setup()
 
   -- Simple and easy statusline.
   --  You could remove this setup call if you don't like it,
@@ -685,6 +756,15 @@ do
       -- or a suggestion from your LSP for this to activate.
       map('gra', vim.lsp.buf.code_action, '[G]oto Code [A]ction', { 'n', 'x' })
 
+      -- Emmet: in insert mode, <C-e> accepts emmet expansion when emmet_ls is attached.
+      -- (With blink super-tab, typing e.g. div>ul>li*3 then Tab usually accepts it directly;
+      -- this mapping is a fallback that triggers completion explicitly.)
+      if client and client.name == 'emmet_language_server' then
+        vim.keymap.set('i', '<C-e>', function()
+          vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<C-space>', true, false, true), 'm', false)
+        end, { buffer = event.buf, desc = 'Emmet expand trigger' })
+      end
+
       -- WARN: This is not Goto Definition, this is Goto Declaration.
       --  For example, in C this would take you to the header.
       map('grD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
@@ -731,12 +811,46 @@ do
   -- Enable the following language servers
   --  Feel free to add/remove any LSPs that you want here. They will automatically be installed.
   --  See `:help lsp-config` for information about keys and how to configure
+  -- ESLint auto-fix on save (JS/TS/React). Silent if eslint not attached.
+  vim.api.nvim_create_autocmd('BufWritePre', {
+    group = vim.api.nvim_create_augroup('eslint-fix-on-save', { clear = true }),
+    pattern = { '*.js', '*.jsx', '*.ts', '*.tsx', '*.vue', '*.svelte', '*.astro' },
+    callback = function(args)
+      for _, client in ipairs(vim.lsp.get_clients { bufnr = args.buf }) do
+        if client.name == 'eslint' and client:supports_method('workspace/executeCommand', args.buf) then
+          vim.cmd 'silent! LspEslintFixAll'
+          break
+        end
+      end
+    end,
+  })
+
   ---@type table<string, vim.lsp.Config>
   local servers = {
     -- clangd = {},
     -- gopls = {},
-    -- pyright = {},
-    -- tsc = {},
+    pyright = {},
+    ts_ls = {},
+    tailwindcss = {},
+    eslint = {},
+    html = {},
+    cssls = {},
+    jsonls = {},
+    emmet_language_server = {
+      filetypes = {
+        'css',
+        'eruby',
+        'html',
+        'htmldjango',
+        'javascriptreact',
+        'less',
+        'pug',
+        'sass',
+        'scss',
+        'typescriptreact',
+        'htmlangular',
+      },
+    },
     --
     -- Some languages (like rust) have entire language plugins that can be useful:
     --    https://github.com/mrcjkb/rustaceanvim
@@ -788,6 +902,7 @@ do
 
   -- Automatically install LSPs and related tools to stdpath for Neovim
   require('mason').setup {}
+  vim.keymap.set('n', '<leader>m', '<cmd>Mason<cr>', { desc = '[M]ason' })
 
   -- Translates between nvim-lspconfig server names and mason.nvim package names (e.g. lua_ls <-> lua-language-server)
   require('mason-lspconfig').setup {
@@ -803,7 +918,11 @@ do
   -- You can press `g?` for help in this menu.
   local ensure_installed = vim.tbl_keys(servers or {})
   vim.list_extend(ensure_installed, {
-    -- You can add other tools here that you want Mason to install
+    'prettierd',
+    'prettier',
+    'eslint_d',
+    'tailwindcss-language-server',
+    'ruff',
   })
 
   require('mason-tool-installer').setup { ensure_installed = ensure_installed }
@@ -812,6 +931,32 @@ do
     vim.lsp.config(name, server)
     vim.lsp.enable(name)
   end
+end
+
+-- ============================================================
+-- SECTION 6.5: FILE TREE
+-- neo-tree sidebar: <leader>e toggle, ? for help inside the tree
+-- ============================================================
+do
+  vim.pack.add {
+    gh 'MunifTanjim/nui.nvim',
+    gh 'nvim-neo-tree/neo-tree.nvim',
+  }
+  require('neo-tree').setup {
+    enable_git_status = true,
+    filesystem = {
+      follow_current_file = { enabled = true },
+      filtered_items = {
+        visible = true, -- true = ของที่ถูกซ่อนจะโชว์แบบจางๆ แทนการหายไปเลย
+        hide_dotfiles = false, -- โชว์ .* แบบปกติ (สว่าง)
+        hide_gitignored = true, -- เก็บ ignored ไว้ในกลุ่ม filtered -> โชว์แบบจาง + มีสัญลักษณ์ 
+        hide_hidden = false,
+        show_hidden_count = true,
+      },
+    },
+    window = { width = 30 },
+  }
+  vim.keymap.set('n', '<leader>e', '<cmd>Neotree toggle<CR>', { desc = 'Toggle fil[e] tree' })
 end
 
 -- ============================================================
@@ -826,8 +971,16 @@ do
     format_on_save = function(bufnr)
       -- You can specify filetypes to autoformat on save here:
       local enabled_filetypes = {
-        -- lua = true,
-        -- python = true,
+        lua = true,
+        python = true,
+        javascript = true,
+        typescript = true,
+        javascriptreact = true,
+        typescriptreact = true,
+        json = true,
+        jsonc = true,
+        css = true,
+        html = true,
       }
       if enabled_filetypes[vim.bo[bufnr].filetype] then
         return { timeout_ms = 500 }
@@ -840,6 +993,16 @@ do
     },
     -- You can also specify external formatters in here.
     formatters_by_ft = {
+      lua = { 'stylua' },
+      python = { 'ruff_format' },
+      javascript = { 'prettierd', 'prettier', stop_after_first = true },
+      typescript = { 'prettierd', 'prettier', stop_after_first = true },
+      javascriptreact = { 'prettierd', 'prettier', stop_after_first = true },
+      typescriptreact = { 'prettierd', 'prettier', stop_after_first = true },
+      json = { 'prettierd', 'prettier', stop_after_first = true },
+      jsonc = { 'prettierd', 'prettier', stop_after_first = true },
+      css = { 'prettierd', 'prettier', stop_after_first = true },
+      html = { 'prettierd', 'prettier', stop_after_first = true },
       -- rust = { 'rustfmt' },
       -- Conform can also run multiple formatters sequentially
       -- python = { "isort", "black" },
@@ -868,8 +1031,8 @@ do
   --    See the README about individual language/framework/plugin snippets:
   --    https://github.com/rafamadriz/friendly-snippets
   --
-  -- vim.pack.add { gh 'rafamadriz/friendly-snippets' }
-  -- require('luasnip.loaders.from_vscode').lazy_load()
+  vim.pack.add { gh 'rafamadriz/friendly-snippets' }
+  require('luasnip.loaders.from_vscode').lazy_load()
 
   -- [[ Autocomplete Engine ]]
   vim.pack.add { { src = gh 'saghen/blink.cmp', version = vim.version.range '1.*' } }
@@ -896,7 +1059,7 @@ do
       -- <c-k>: Toggle signature help
       --
       -- See `:help blink-cmp-config-keymap` for defining your own keymap
-      preset = 'default',
+      preset = 'super-tab',
 
       -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
       --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
@@ -911,11 +1074,13 @@ do
     completion = {
       -- By default, you may press `<c-space>` to show the documentation.
       -- Optionally, set `auto_show = true` to show the documentation after a delay.
-      documentation = { auto_show = false, auto_show_delay_ms = 500 },
+      documentation = { auto_show = true, auto_show_delay_ms = 300 },
+      ghost_text = { enabled = true },
+      menu = { auto_show = true },
     },
 
     sources = {
-      default = { 'lsp', 'path', 'snippets' },
+      default = { 'lsp', 'path', 'snippets', 'buffer' },
     },
 
     snippets = { preset = 'luasnip' },
@@ -927,7 +1092,7 @@ do
     -- the rust implementation via `'prefer_rust_with_warning'`
     --
     -- See `:help blink-cmp-config-fuzzy` for more information
-    fuzzy = { implementation = 'lua' },
+    fuzzy = { implementation = 'prefer_rust_with_warning' },
 
     -- Shows a signature help window while you type arguments for a function
     signature = { enabled = true },
@@ -948,7 +1113,7 @@ do
   vim.pack.add { { src = gh 'nvim-treesitter/nvim-treesitter', version = 'main' } }
 
   -- Ensure basic parsers are installed
-  local parsers = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' }
+  local parsers = { 'bash', 'c', 'diff', 'html', 'css', 'javascript', 'typescript', 'tsx', 'json', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' }
   require('nvim-treesitter').install(parsers)
 
   ---@param buf integer
@@ -994,6 +1159,35 @@ do
       end
     end,
   })
+end
+
+-- ============================================================
+-- SECTION 9.5: PYTHON VENV SELECTOR
+-- :VenvSelect -> pick server/.venv, .venv (root), notebooks/.venv; restarts pyright
+-- ============================================================
+do
+  vim.pack.add { gh 'linux-cultist/venv-selector.nvim' } -- default branch = regexp (v2)
+
+  require('venv-selector').setup {
+    settings = {
+      options = {
+        notify_user_on_venv_activation = true,
+        -- no `fd` on this box; skip the built-in fd-based searches
+        enable_default_searches = false,
+      },
+      search = {
+        -- walk the current project for every `.venv/bin/python`
+        project_venvs = {
+          command = "/usr/bin/find "
+            .. vim.fn.getcwd()
+            .. " -maxdepth 5 \\( -type f -o -type l \\) -name python -path '*/.venv/bin/python'"
+            .. " -not -path '*/node_modules/*'",
+        },
+      },
+    },
+  }
+
+  vim.keymap.set('n', '<leader>cv', '<cmd>VenvSelect<CR>', { desc = 'Select python [v]env' })
 end
 
 -- ============================================================
