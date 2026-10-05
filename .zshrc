@@ -1,6 +1,8 @@
-# ======== ZSH Configuration (Optimized for Productivity) =======
+# ============================================================
+# ZSH Configuration
+# (Optimized for Productivity)
 # editor: jeerasak
-# ==================================
+# ============================================================
 
 # ============================================================
 # 1. INIT - Powerlevel10k Instant Prompt
@@ -19,15 +21,24 @@ plugins=(
   git
   z
   zsh-autosuggestions
-  zsh-syntax-highlighting
   docker
   docker-compose
+  zoxide
+  kubectl
+  npm
+  extract
+  colored-man-pages
+  command-not-found
+  history-substring-search
+  zsh-syntax-highlighting
 )
+fpath+=(~/.zsh/completions)
 source $ZSH/oh-my-zsh.sh
 
 # ============================================================
 # 3. PATH CONFIGURATION
 # ============================================================
+typeset -U path PATH  # keep PATH entries unique
 export PATH="$PATH:/opt/nvim-linux-x86_64/bin"
 export PATH="/home/game/.local/bin:$PATH"
 export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
@@ -149,7 +160,7 @@ alias dprune="docker system prune -f"
 
 # Python
 alias py="python3"
-alias pip="pip3"
+alias pip="uv pip"  # avoid global installs into brew python (PEP 668); use inside a venv
 alias pir="pip install -r requirements.txt"
 alias venv="python3 -m venv venv && source venv/bin/activate"
 alias venvdeactivate="deactivate"
@@ -476,12 +487,14 @@ fi
 export HISTFILE=~/.zsh_history
 export HISTSIZE=100000
 export SAVEHIST=100000
-setopt APPEND_HISTORY
-setopt HIST_IGNORE_DUPS
+setopt APPEND_HISTORY           # เพิ่ม history ที่ terminal ใหม่ทันที
+setopt SHARE_HISTORY            # แบุก history ระหว่างหลาย terminal
+setopt HIST_IGNORE_ALL_DUPS     # ลบ duplicate ทั้งหมด ไม่ใช่แคบออกทีหนึ่ง
 setopt HIST_FIND_NO_DUPS
 setopt HIST_REDUCE_BLANKS
 setopt INC_APPEND_HISTORY
 setopt HIST_IGNORE_SPACE
+setopt AUTO_LIST                # แสดงตัวเลือกเมื่อเติมทำลาย
 
 # ============================================================
 # 17. COMPLETION SETTINGS
@@ -506,6 +519,11 @@ bindkey '^[^?' backward-delete-word
 bindkey '^[[1;3C' forward-word
 bindkey '^[[1;3D' backward-word
 
+# fzf keybindings (Ctrl+R = fuzzy history search, Ctrl+T = fuzzy file search, Alt+C = cd)
+bindkey '^R' fzf-history-widget
+bindkey '^T' fzf-file-widget
+bindkey '^IC' fzf-cd-widget
+
 # ============================================================
 # 19. MISC SETTINGS & OPTIMIZATIONS
 # ============================================================
@@ -519,14 +537,23 @@ setopt extendedglob
 # Notify immediately when background jobs change
 setopt NOTIFY
 
+# ============================================================
+# 20. ADDITIONAL PRODUCTIVITY (oh-my-zsh plugins)
+# ============================================================
+# Docker + Docker Compose aliases from oh-my-zsh plugins (d, dc, dcu, dcd, dcl, dcr, dps, dpst, dex, dim, dri, drmi, dprune)
+# K8s aliases from kubectl plugin (k, kg, kd, kl, klogs, kex)
+# npm aliases from npm plugin (ni, nl, nid, nun, nrb, nrs, nrt, nll)
+# Safe extract: extract file.tar.gz (no -rf risk)
+# colored-man-pages: man, diff, output colored via less
+# command-not-found: suggests package when command missing (apt)
+# zoxide: smart cd (z foo, zi, za, oz)
 
+# ============================================================
 # AsyncAPI CLI Autocomplete
 
 ASYNCAPI_AC_ZSH_SETUP_PATH=/home/game/.cache/@asyncapi/cli/autocomplete/zsh_setup; [[ -f $ASYNCAPI_AC_ZSH_SETUP_PATH ]] && source $ASYNCAPI_AC_ZSH_SETUP_PATH # asyncapi autocomplete setup
 
 
-export PATH=$HOME/.local/bin:$PATH
-export PATH="$HOME/.local/bin:$PATH"
 
 # bun completions
 [ -s "/home/game/.bun/_bun" ] && source "/home/game/.bun/_bun"
@@ -541,7 +568,6 @@ export PATH=/home/game/.strix/bin:$PATH
 . "$HOME/.atuin/bin/env"
 
 eval "$(atuin init zsh)"
-export PATH="$HOME/.local/bin:$PATH"
 # Only touch the terminal when interactive with a TTY — avoids
 # "stty: 'standard input': Inappropriate ioctl for device" during
 # Powerlevel10k instant prompt / non-interactive init.
@@ -549,3 +575,23 @@ if [[ $- == *i* && -t 0 ]]; then
   stty -ixon 2>/dev/null || true
 fi
 alias vim="nvim"  # vim opens neovim
+
+# nvm: put newest installed node on PATH (fast), load nvm.sh lazily on first use
+export NVM_DIR="$HOME/.nvm"
+_nvm_node=(${NVM_DIR}/versions/node/v*(N/On[1]))
+[[ -n $_nvm_node ]] && path=($_nvm_node/bin $path)
+unset _nvm_node
+_nvm_lazy() {
+  unset -f nvm _nvm_lazy
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+  nvm "$@"
+}
+nvm() { _nvm_lazy "$@"; }
+
+# Windows interop: appendWindowsPath=false in /etc/wsl.conf, so add only what is needed
+for _p in /mnt/c/WINDOWS/system32 /mnt/c/WINDOWS "/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0" \
+          "/mnt/c/Users/jeera/AppData/Local/Programs/Microsoft VS Code/bin" "/mnt/c/Program Files/cursor/resources/app/bin"; do
+  [[ -d $_p ]] && path+=("$_p")
+done
+unset _p
